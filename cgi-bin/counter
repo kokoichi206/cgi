@@ -1,0 +1,57 @@
+#!/bin/bash
+
+datadir="<path_to_counter_db>"
+
+referer="$HTTP_REFERER"
+my_github="https://github.com/kokoichi206"
+if [ "${referer:0:30}" = "${my_github}" ]; then
+    # increment the counter ONLY if accessed from my github.
+    echo -n 1 >> "$datadir"
+fi
+
+# increment the counter ONLY if accessed from my github.
+# Github use 'camo' proxy for secury reason.
+# https://docs.github.com/ja/authentication/keeping-your-account-and-data-secure/about-anonymized-urls
+if [ "${HTTP_USER_AGENT:0:11}" = "github-camo" ]; then
+    echo -n 1 >> "$datadir"
+fi
+
+counts="$(ls -l $datadir | cut -d' ' -f 5)"
+
+# 各桁の表示する数字を計算する。
+fourth="$((counts / 1000))"
+third="$((counts / 100))"
+second="$((counts / 10))"
+first="$((counts))"
+
+text_color="#539CF5"
+bg_color="#22272E"
+
+echo "Content-Type: image/svg+xml; charset=UTF-8"
+echo "cache-control: max-age=0, no-cache, no-store, must-revalidate"
+echo "etag: W/\"count-${counts}$(date | tr -d ' :')\""
+echo ""
+echo "<?xml version='1.0' encoding='UTF-8'?>
+<svg width='128px' height='30px' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'>
+    <title>Count</title>
+    <g id='Page-1' stroke='none' stroke-width='1' fill='none' fill-rule='evenodd'>
+
+        <rect id='Rectangle' fill='${bg_color}' x='0.5' y='0.5' width='127' height='29'></rect>
+        <text id='0' font-family='Courier' font-size='24' font-weight='normal' fill='${text_color}'>
+            <tspan x='7' y='22'>${fourth:(-1)}</tspan>
+        </text>
+
+        <text id='1' font-family='Courier' font-size='24' font-weight='normal' fill='${text_color}'>
+            <tspan x='39' y='22'>${third:(-1)}</tspan>
+        </text>
+
+        <text id='2' font-family='Courier' font-size='24' font-weight='normal' fill='${text_color}'>
+            <tspan x='71' y='22'>${second:(-1)}</tspan>
+        </text>
+
+        <text id='3' font-family='Courier' font-size='24' font-weight='normal' fill='${text_color}'>
+            <tspan x='103' y='22'>${first:(-1)}</tspan>
+        </text>
+    </g>
+</svg>
+"
