@@ -24,13 +24,24 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
     # --- curl: (52) Empty reply from server ---
     in_raw=`cat`
     split_data=($(echo -n "$in_raw" | tr "=" "\n"))
-    file_name=${split_data[0]}
+    # file_name=${split_data[0]}
+    file_name_and_github_name=${split_data[0]}
+    # '%23' means '#'
+    if [[ "$file_name_and_github_name" =~ (.*)%23(.*) ]]; then
+        file_name=${BASH_REMATCH[1]}
+        github_name=${BASH_REMATCH[2]}
+    fi
     file_content=${split_data[1]}
+
     if [[ "${file_name}" == *.png ]]; then
         if [ "${#file_content}" -gt 10 ]; then
-            echo "<p>Write to ${file_name}</p>"
-            mv /var/www/html/imgs/github-events/${file_name} /var/www/html/imgs/github-events/${file_name}.bak
-            echo "$file_content" | urldecode | base64 -d > /var/www/html/imgs/github-events/${file_name}
+            echo "<p>Writing to ${file_name}</p>"
+            mv /var/www/html/imgs/github-events/${github_name}/${file_name} /var/www/html/imgs/github-events/${github_name}/${file_name}.bak
+            echo "$file_content" | urldecode | base64 -d > /var/www/html/imgs/github-events/${github_name}/${file_name}
+            echo "<p style='color:red;'>Save Succeeded!!</p>"
+            echo "<p>see: /var/www/html/imgs/github-events/${github_name}/${file_name}</p>"
+            echo "<p>file_name: ${file_name}</p>"
+            echo "<p>github_name: ${github_name}</p>"
         fi
     fi
 fi
