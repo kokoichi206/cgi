@@ -7,19 +7,15 @@ echo '<html>'
 echo '<head>'
 echo '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">'
 echo '<title>Foo</title>'
-echo '</head>'
-echo '<body>'
-
-echo "<p>Start</p>"
 
 urldecode(){
     echo -e "$(sed 's/+/ /g;s/%\(..\)/\\x\1/g;')"
 }
 
-echo "REQUEST_METHOD: $REQUEST_METHOD\n"
-echo "<p>CONTENT_LENGTH: $CONTENT_LENGTH</p>"
+body="REQUEST_METHOD: $REQUEST_METHOD\n"
+body+="<p>CONTENT_LENGTH: $CONTENT_LENGTH</p>"
 if [ "$REQUEST_METHOD" = "POST" ]; then
-    echo "<p>Post Method</p>"
+    body+="<p>Post Method</p>"
     # 絶対に読む必要がある！
     # --- curl: (52) Empty reply from server ---
     in_raw=`cat`
@@ -35,17 +31,21 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
 
     if [[ "${file_name}" == *.png ]]; then
         if [ "${#file_content}" -gt 10 ]; then
-            echo "<p>Writing to ${file_name}</p>"
+            body+="<p>Writing to ${file_name}</p>"
             mv /var/www/html/imgs/github-events/${github_name}/${file_name} /var/www/html/imgs/github-events/${github_name}/${file_name}.bak
+            body+="$file_content" | urldecode | base64 -d > /var/www/html/imgs/github-events/${github_name}/${file_name}
             echo "$file_content" | urldecode | base64 -d > /var/www/html/imgs/github-events/${github_name}/${file_name}
-            echo "<p style='color:red;'>Save Succeeded!!</p>"
-            echo "<p>see: /var/www/html/imgs/github-events/${github_name}/${file_name}</p>"
-            echo "<p>file_name: ${file_name}</p>"
-            echo "<p>github_name: ${github_name}</p>"
+
+            redirect_url="/github/index-success.html"
+            echo "<meta http-equiv=\"refresh\" content=\"0; url=${redirect_url}\"/>"
         fi
     fi
 fi
 
+echo '</head>'
+
+echo '<body>'
+echo "${body}"
 echo '</body>'
 echo '</html>'
 
